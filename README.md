@@ -144,13 +144,38 @@ forbidden:
   patterns: [drums/trap-*]
 ```
 
-### Deterministic Compilation
+### Score IR (Intermediate Representation)
 
-Same arrangement → same MIDI. Always.
+The Score IR is the stable, inspectable interface between arrangement and MIDI:
 
 ```
-Arrangement YAML → PatternInstance (diffable) → EventList (deterministic) → MIDI
+Arrangement YAML → Score IR (diffable, versioned) → MIDI
 ```
+
+**Same arrangement → same Score IR → same MIDI. Always.**
+
+The IR is designed for:
+- **Inspection**: Human-readable JSON/YAML output
+- **Diffing**: Canonical ordering makes diffs meaningful
+- **Testing**: Golden-file tests compare IR directly
+- **Debugging**: Full source traceability (layer, pattern, section, bar, beat)
+
+```python
+# Compile and inspect
+result = compiler.compile(arrangement)
+print(result.score_ir.summary())
+# {'name': 'my-track', 'total_bars': 32, 'total_notes': 256,
+#  'layers': {'drums': 128, 'bass': 64, 'harmony': 64}, ...}
+
+# Compare two versions
+diff = old_ir.diff_summary(new_ir)
+# {'notes_added': 12, 'notes_removed': 8, 'notes_unchanged': 244, ...}
+
+# Export for debugging
+print(result.score_ir.to_json())
+```
+
+Schema version: `score_ir/v1`
 
 ## MCP Tools
 
@@ -180,8 +205,9 @@ The server provides 30+ tools organized by domain:
 - `music_suggest_patterns`, `music_validate_style`
 - `music_apply_style`, `music_copy_style_to_project`
 
-**Compilation Tools** (4):
+**Compilation Tools** (6):
 - `music_compile_midi`, `music_preview_section`
+- `music_compile_to_ir`, `music_diff_ir`
 - `music_export_yaml`, `music_validate`
 
 ## Development
@@ -212,7 +238,10 @@ src/chuk_mcp_music/
 ├── arrangement/    # Arrangement management
 ├── patterns/       # Pattern system and library
 ├── styles/         # Style system and library
-├── compiler/       # MIDI compilation
+├── compiler/       # Compilation pipeline
+│   ├── arranger.py # Arrangement → Score IR → MIDI
+│   ├── score_ir.py # Intermediate representation (versioned, diffable)
+│   └── midi.py     # MIDI file generation
 ├── tools/          # MCP tool implementations
 └── async_server.py # MCP server entry point
 ```

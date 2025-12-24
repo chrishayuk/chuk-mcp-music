@@ -252,4 +252,124 @@ def register_compilation_tools(
 
     tools["music_validate"] = music_validate
 
+    @mcp.tool  # type: ignore[arg-type]
+    async def music_compile_to_ir(
+        arrangement: str,
+        section: str | None = None,
+        include_notes: bool = True,
+    ) -> str:
+        """
+        Compile an arrangement to Score IR for inspection.
+
+        Returns the intermediate representation before MIDI encoding.
+        Useful for debugging, diffing, and understanding compilation.
+
+        The Score IR is versioned (score_ir/v1) and canonicalized for
+        deterministic output - the same arrangement always produces
+        the same IR, making it ideal for golden-file testing.
+
+        Args:
+            arrangement: Arrangement name
+            section: Optional section name (compile only that section)
+            include_notes: Whether to include individual notes (default True)
+
+        Returns:
+            JSON string with Score IR
+
+        Example:
+            music_compile_to_ir(arrangement="my-track")
+            music_compile_to_ir(arrangement="my-track", section="chorus")
+            music_compile_to_ir(arrangement="my-track", include_notes=False)
+        """
+        try:
+            arr = await manager.get(arrangement)
+            if arr is None:
+                return json.dumps(
+                    {"status": "error", "message": f"Arrangement not found: {arrangement}"}
+                )
+
+            # Compile to get Score IR
+            result = compiler.compile_section(arr, section) if section else compiler.compile(arr)
+
+            # Get the Score IR
+            score_ir = result.score_ir
+
+            # Build response
+            ir_dict = score_ir.to_dict()
+
+            # Optionally exclude notes for summary view
+            if not include_notes:
+                ir_dict["notes"] = []
+                ir_dict["note_count"] = score_ir.note_count()
+
+            return json.dumps(
+                {
+                    "status": "success",
+                    "score_ir": ir_dict,
+                    "summary": score_ir.summary(),
+                }
+            )
+        except ValueError as e:
+            return json.dumps({"status": "error", "message": str(e)})
+        except Exception as e:
+            logger.exception("Failed to compile to IR")
+            return json.dumps({"status": "error", "message": str(e)})
+
+    tools["music_compile_to_ir"] = music_compile_to_ir
+
+    @mcp.tool  # type: ignore[arg-type]
+    async def music_diff_ir(
+        arrangement: str,
+        other_arrangement: str,
+    ) -> str:
+        """
+        Compare the Score IR of two arrangements.
+
+        Returns a summary of differences between two compiled arrangements.
+        Useful for understanding what changed between versions.
+
+        Args:
+            arrangement: First arrangement name
+            other_arrangement: Second arrangement name
+
+        Returns:
+            JSON string with diff summary
+
+        Example:
+            music_diff_ir(arrangement="track-v1", other_arrangement="track-v2")
+        """
+        try:
+            arr1 = await manager.get(arrangement)
+            if arr1 is None:
+                return json.dumps(
+                    {"status": "error", "message": f"Arrangement not found: {arrangement}"}
+                )
+
+            arr2 = await manager.get(other_arrangement)
+            if arr2 is None:
+                return json.dumps(
+                    {"status": "error", "message": f"Arrangement not found: {other_arrangement}"}
+                )
+
+            # Compile both
+            result1 = compiler.compile(arr1)
+            result2 = compiler.compile(arr2)
+
+            # Get diff summary
+            diff = result1.score_ir.diff_summary(result2.score_ir)
+
+            return json.dumps(
+                {
+                    "status": "success",
+                    "arrangement_a": arrangement,
+                    "arrangement_b": other_arrangement,
+                    "diff": diff,
+                }
+            )
+        except Exception as e:
+            logger.exception("Failed to diff arrangements")
+            return json.dumps({"status": "error", "message": str(e)})
+
+    tools["music_diff_ir"] = music_diff_ir
+
     return tools

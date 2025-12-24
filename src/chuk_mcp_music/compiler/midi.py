@@ -15,6 +15,8 @@ from mido import Message, MetaMessage, MidiFile, MidiTrack
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from chuk_mcp_music.compiler.score_ir import ScoreIR
+
 
 # Standard ticks per beat (quarter note) - industry standard
 TICKS_PER_BEAT = 480
@@ -182,6 +184,47 @@ def create_test_midi(tempo_bpm: int = 120) -> MidiFile:
             )
 
     return events_to_midi(events, tempo_bpm=tempo_bpm)
+
+
+def score_ir_to_midi(score_ir: ScoreIR) -> MidiFile:
+    """
+    Convert a Score IR directly to a MidiFile.
+
+    This enables the round-trip workflow:
+    1. Compile arrangement to IR
+    2. Modify IR (filter notes, adjust velocities, etc.)
+    3. Emit MIDI from modified IR
+
+    Args:
+        score_ir: A ScoreIR object (can be loaded from JSON)
+
+    Returns:
+        A mido MidiFile ready to be saved
+
+    Example:
+        ir = ScoreIR.from_json(json_str)
+        # Filter out drums
+        ir.notes = [n for n in ir.notes if n.source_layer != "drums"]
+        midi = score_ir_to_midi(ir)
+        midi.save("no_drums.mid")
+    """
+    # Convert IR notes to MidiEvents
+    events = [
+        MidiEvent(
+            pitch=note.pitch,
+            start_ticks=note.start_ticks,
+            duration_ticks=note.duration_ticks,
+            velocity=note.velocity,
+            channel=note.channel,
+        )
+        for note in score_ir.notes
+    ]
+
+    return events_to_midi(
+        events,
+        tempo_bpm=score_ir.tempo,
+        ticks_per_beat=score_ir.ticks_per_beat,
+    )
 
 
 def beats_to_ticks(beats: float, ticks_per_beat: int = TICKS_PER_BEAT) -> int:

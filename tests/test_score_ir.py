@@ -637,3 +637,234 @@ class TestGoldenFileIR:
         assert ir.name == "golden-test:intro"
         assert ir.total_bars == 2
         assert ir.note_count() == 8
+
+
+class TestScoreIRRoundTrip:
+    """Tests for Score IR round-trip functionality."""
+
+    def test_score_ir_to_midi(self) -> None:
+        """Convert Score IR directly to MIDI."""
+        from chuk_mcp_music.compiler.midi import score_ir_to_midi
+
+        ir = ScoreIR(
+            name="test",
+            key="C_major",
+            tempo=120,
+            notes=[
+                IRNote(start_ticks=0, channel=0, pitch=60, duration_ticks=480, velocity=100),
+                IRNote(start_ticks=480, channel=0, pitch=62, duration_ticks=480, velocity=100),
+            ],
+        )
+
+        midi = score_ir_to_midi(ir)
+        assert midi is not None
+        assert len(midi.tracks) == 1
+
+    def test_score_ir_to_midi_preserves_tempo(self) -> None:
+        """MIDI output preserves tempo from IR."""
+        from chuk_mcp_music.compiler.midi import score_ir_to_midi
+
+        ir = ScoreIR(
+            name="test",
+            tempo=140,
+            notes=[
+                IRNote(start_ticks=0, channel=0, pitch=60, duration_ticks=480, velocity=100),
+            ],
+        )
+
+        midi = score_ir_to_midi(ir)
+
+        # Find tempo message
+        tempo_msgs = [msg for msg in midi.tracks[0] if msg.type == "set_tempo"]
+        assert len(tempo_msgs) == 1
+        # 140 BPM = 428571 microseconds per beat
+        assert tempo_msgs[0].tempo == 428571
+
+    def test_score_ir_round_trip_via_json(self) -> None:
+        """IR survives JSON round-trip and produces same MIDI."""
+        import tempfile
+
+        from chuk_mcp_music.compiler.midi import score_ir_to_midi
+
+        original_ir = ScoreIR(
+            name="round-trip-test",
+            key="D_minor",
+            tempo=124,
+            notes=[
+                IRNote(
+                    start_ticks=0,
+                    channel=1,
+                    pitch=50,
+                    duration_ticks=480,
+                    velocity=90,
+                    source_layer="bass",
+                ),
+                IRNote(
+                    start_ticks=480,
+                    channel=1,
+                    pitch=52,
+                    duration_ticks=480,
+                    velocity=85,
+                    source_layer="bass",
+                ),
+            ],
+        )
+
+        # Round-trip through JSON
+        json_str = original_ir.to_json()
+        restored_ir = ScoreIR.from_json(json_str)
+
+        # Both should produce identical MIDI
+        midi1 = score_ir_to_midi(original_ir)
+        midi2 = score_ir_to_midi(restored_ir)
+
+        with (
+            tempfile.NamedTemporaryFile(suffix=".mid") as f1,
+            tempfile.NamedTemporaryFile(suffix=".mid") as f2,
+        ):
+            midi1.save(f1.name)
+            midi2.save(f2.name)
+
+            with open(f1.name, "rb") as a, open(f2.name, "rb") as b:
+                assert a.read() == b.read()
+
+    def test_filter_notes_by_layer(self) -> None:
+        """Filter IR notes by source layer."""
+        ir = ScoreIR(
+            notes=[
+                IRNote(
+                    start_ticks=0,
+                    channel=1,
+                    pitch=48,
+                    duration_ticks=480,
+                    velocity=90,
+                    source_layer="bass",
+                ),
+                IRNote(
+                    start_ticks=0,
+                    channel=9,
+                    pitch=36,
+                    duration_ticks=120,
+                    velocity=100,
+                    source_layer="drums",
+                ),
+                IRNote(
+                    start_ticks=480,
+                    channel=1,
+                    pitch=50,
+                    duration_ticks=480,
+                    velocity=90,
+                    source_layer="bass",
+                ),
+            ]
+        )
+
+        # Filter to just bass
+        bass_notes = [n for n in ir.notes if n.source_layer == "bass"]
+        bass_only_ir = ScoreIR(
+            name=ir.name + "_bass",
+            notes=bass_notes,
+        )
+
+        assert bass_only_ir.note_count() == 2
+        assert all(n.source_layer == "bass" for n in bass_only_ir.notes)
+
+    def test_transform_velocity(self) -> None:
+        """Transform note velocities in IR."""
+        original_notes = [
+            IRNote(start_ticks=0, channel=0, pitch=60, duration_ticks=480, velocity=100),
+            IRNote(start_ticks=480, channel=0, pitch=62, duration_ticks=480, velocity=80),
+        ]
+
+        # Scale velocities by 0.5
+        scaled_notes = [
+            IRNote(
+                start_ticks=n.start_ticks,
+                channel=n.channel,
+                pitch=n.pitch,
+                duration_ticks=n.duration_ticks,
+                velocity=int(n.velocity * 0.5),
+            )
+            for n in original_notes
+        ]
+
+        assert scaled_notes[0].velocity == 50
+        assert scaled_notes[1].velocity == 40
+
+    def test_transpose_pitch(self) -> None:
+        """Transpose note pitches in IR."""
+        original_notes = [
+            IRNote(start_ticks=0, channel=0, pitch=60, duration_ticks=480, velocity=100),
+            IRNote(start_ticks=480, channel=0, pitch=62, duration_ticks=480, velocity=100),
+        ]
+
+        # Transpose up an octave
+        transposed_notes = [
+            IRNote(
+                start_ticks=n.start_ticks,
+                channel=n.channel,
+                pitch=n.pitch + 12,
+                duration_ticks=n.duration_ticks,
+                velocity=n.velocity,
+            )
+            for n in original_notes
+        ]
+
+        assert transposed_notes[0].pitch == 72
+        assert transposed_notes[1].pitch == 74
+
+    def test_modified_ir_to_midi(self) -> None:
+        """Modified IR can be converted to MIDI."""
+        from chuk_mcp_music.compiler.midi import score_ir_to_midi
+
+        ir = ScoreIR(
+            name="test",
+            tempo=120,
+            notes=[
+                IRNote(
+                    start_ticks=0,
+                    channel=1,
+                    pitch=48,
+                    duration_ticks=480,
+                    velocity=90,
+                    source_layer="bass",
+                ),
+                IRNote(
+                    start_ticks=0,
+                    channel=9,
+                    pitch=36,
+                    duration_ticks=120,
+                    velocity=100,
+                    source_layer="drums",
+                ),
+            ],
+        )
+
+        # Filter to just bass, transpose, and emit
+        bass_notes = [n for n in ir.notes if n.source_layer == "bass"]
+        transposed = [
+            IRNote(
+                start_ticks=n.start_ticks,
+                channel=n.channel,
+                pitch=n.pitch + 12,
+                duration_ticks=n.duration_ticks,
+                velocity=n.velocity,
+                source_layer=n.source_layer,
+            )
+            for n in bass_notes
+        ]
+
+        modified_ir = ScoreIR(
+            name="bass_only_transposed",
+            tempo=ir.tempo,
+            notes=transposed,
+        )
+
+        midi = score_ir_to_midi(modified_ir)
+        assert midi is not None
+        assert len(midi.tracks) == 1
+
+        # Should have 2 messages: note_on and note_off for the one bass note
+        note_messages = [msg for msg in midi.tracks[0] if msg.type in ("note_on", "note_off")]
+        assert len(note_messages) == 2
+        assert note_messages[0].note == 60  # 48 + 12

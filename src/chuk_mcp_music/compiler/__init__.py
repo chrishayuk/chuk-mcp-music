@@ -15,6 +15,7 @@ from chuk_mcp_music.compiler.midi import (
     MidiEvent,
     create_test_midi,
     events_to_midi,
+    score_ir_to_midi,
 )
 
 
@@ -46,4 +47,5 @@ __all__ = [
     "MidiEvent",
     "create_test_midi",
     "events_to_midi",
+    "score_ir_to_midi",
 ]

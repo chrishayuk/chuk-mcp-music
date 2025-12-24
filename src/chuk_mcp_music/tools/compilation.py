@@ -372,4 +372,194 @@ def register_compilation_tools(
 
     tools["music_diff_ir"] = music_diff_ir
 
+    @mcp.tool  # type: ignore[arg-type]
+    async def music_emit_midi_from_ir(
+        ir_json: str,
+        output_name: str,
+    ) -> str:
+        """
+        Emit a MIDI file directly from Score IR JSON.
+
+        This enables the round-trip workflow:
+        1. Compile arrangement to IR (music_compile_to_ir)
+        2. Modify the IR (filter notes, adjust velocities, etc.)
+        3. Emit MIDI from the modified IR (this tool)
+
+        Args:
+            ir_json: Score IR as JSON string (from music_compile_to_ir)
+            output_name: Output filename (without .mid extension)
+
+        Returns:
+            JSON string with output file path
+
+        Example:
+            # Get IR, modify it externally, then emit
+            ir = music_compile_to_ir(arrangement="my-track")
+            # ... modify ir["score_ir"] ...
+            music_emit_midi_from_ir(ir_json=modified_ir, output_name="modified")
+        """
+        try:
+            from chuk_mcp_music.compiler.midi import score_ir_to_midi
+            from chuk_mcp_music.compiler.score_ir import ScoreIR
+
+            # Parse the IR
+            score_ir = ScoreIR.from_json(ir_json)
+
+            # Convert to MIDI
+            midi_file = score_ir_to_midi(score_ir)
+
+            # Save
+            filename = f"{output_name}.mid"
+            output_path = output_dir / filename
+            output_dir.mkdir(parents=True, exist_ok=True)
+            midi_file.save(str(output_path))
+
+            return json.dumps(
+                {
+                    "status": "success",
+                    "path": str(output_path),
+                    "summary": score_ir.summary(),
+                    "message": f"Emitted {score_ir.note_count()} notes to {filename}",
+                }
+            )
+        except Exception as e:
+            logger.exception("Failed to emit MIDI from IR")
+            return json.dumps({"status": "error", "message": str(e)})
+
+    tools["music_emit_midi_from_ir"] = music_emit_midi_from_ir
+
+    @mcp.tool  # type: ignore[arg-type]
+    async def music_modify_ir(
+        ir_json: str,
+        filter_layers: list[str] | None = None,
+        exclude_layers: list[str] | None = None,
+        filter_sections: list[str] | None = None,
+        exclude_sections: list[str] | None = None,
+        velocity_scale: float | None = None,
+        transpose: int | None = None,
+    ) -> str:
+        """
+        Filter and transform a Score IR.
+
+        Modify an IR before emitting to MIDI. Useful for:
+        - Extracting specific layers (stems)
+        - Removing unwanted sections
+        - Adjusting velocity (dynamics)
+        - Transposing pitch
+
+        Args:
+            ir_json: Score IR as JSON string
+            filter_layers: Keep only these layers (by name)
+            exclude_layers: Remove these layers (by name)
+            filter_sections: Keep only these sections (by name)
+            exclude_sections: Remove these sections (by name)
+            velocity_scale: Multiply all velocities by this factor (0.0-2.0)
+            transpose: Transpose all pitches by this many semitones
+
+        Returns:
+            JSON string with modified Score IR
+
+        Example:
+            # Extract just the bass layer
+            music_modify_ir(ir_json=ir, filter_layers=["bass"])
+
+            # Remove drums and reduce velocity
+            music_modify_ir(ir_json=ir, exclude_layers=["drums"], velocity_scale=0.8)
+
+            # Transpose up an octave
+            music_modify_ir(ir_json=ir, transpose=12)
+        """
+        try:
+            from chuk_mcp_music.compiler.score_ir import IRNote, ScoreIR
+
+            # Parse the IR
+            score_ir = ScoreIR.from_json(ir_json)
+            notes = list(score_ir.notes)
+
+            # Filter by layers
+            if filter_layers:
+                notes = [n for n in notes if n.source_layer in filter_layers]
+            if exclude_layers:
+                notes = [n for n in notes if n.source_layer not in exclude_layers]
+
+            # Filter by sections
+            if filter_sections:
+                notes = [n for n in notes if n.source_section in filter_sections]
+            if exclude_sections:
+                notes = [n for n in notes if n.source_section not in exclude_sections]
+
+            # Transform velocity
+            if velocity_scale is not None:
+                scale = max(0.0, min(2.0, velocity_scale))
+                notes = [
+                    IRNote(
+                        start_ticks=n.start_ticks,
+                        channel=n.channel,
+                        pitch=n.pitch,
+                        duration_ticks=n.duration_ticks,
+                        velocity=max(0, min(127, int(n.velocity * scale))),
+                        source_layer=n.source_layer,
+                        source_pattern=n.source_pattern,
+                        source_section=n.source_section,
+                        bar=n.bar,
+                        beat=n.beat,
+                    )
+                    for n in notes
+                ]
+
+            # Transform pitch
+            if transpose is not None:
+                notes = [
+                    IRNote(
+                        start_ticks=n.start_ticks,
+                        channel=n.channel,
+                        pitch=max(0, min(127, n.pitch + transpose)),
+                        duration_ticks=n.duration_ticks,
+                        velocity=n.velocity,
+                        source_layer=n.source_layer,
+                        source_pattern=n.source_pattern,
+                        source_section=n.source_section,
+                        bar=n.bar,
+                        beat=n.beat,
+                    )
+                    for n in notes
+                ]
+
+            # Build modified IR
+            modified_ir = ScoreIR(
+                schema=score_ir.schema,
+                name=score_ir.name + "_modified",
+                key=score_ir.key,
+                tempo=score_ir.tempo,
+                time_signature=score_ir.time_signature,
+                ticks_per_beat=score_ir.ticks_per_beat,
+                total_ticks=score_ir.total_ticks,
+                total_bars=score_ir.total_bars,
+                notes=notes,
+                sections=score_ir.sections,
+                tempo_events=score_ir.tempo_events,
+                layers=score_ir.layers,
+            ).canonicalize()
+
+            return json.dumps(
+                {
+                    "status": "success",
+                    "score_ir": modified_ir.to_dict(),
+                    "summary": modified_ir.summary(),
+                    "modifications": {
+                        "filter_layers": filter_layers,
+                        "exclude_layers": exclude_layers,
+                        "filter_sections": filter_sections,
+                        "exclude_sections": exclude_sections,
+                        "velocity_scale": velocity_scale,
+                        "transpose": transpose,
+                    },
+                }
+            )
+        except Exception as e:
+            logger.exception("Failed to modify IR")
+            return json.dumps({"status": "error", "message": str(e)})
+
+    tools["music_modify_ir"] = music_modify_ir
+
     return tools

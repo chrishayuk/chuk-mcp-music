@@ -2059,3 +2059,487 @@ class TestToolsExceptionHandling:
         result = await tools["music_export_yaml"](arrangement="test")
         data = json.loads(result)
         assert data["status"] == "success"
+
+
+class TestCompilationIRTools:
+    """Tests for Score IR compilation tools."""
+
+    @pytest.mark.asyncio
+    async def test_compile_to_ir(self, temp_dir: Path, library_path: Path):
+        """Compile arrangement to Score IR."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        # Create arrangement with patterns
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+        arr.add_layer("bass", LayerRole.BASS)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr.layers["bass"].arrangement["verse"] = "main"
+
+        result = await tools["music_compile_to_ir"](arrangement="test")
+        data = json.loads(result)
+        assert data["status"] == "success"
+        assert "score_ir" in data
+        assert "summary" in data
+        assert data["score_ir"]["schema"] == "score_ir/v1"
+
+    @pytest.mark.asyncio
+    async def test_compile_to_ir_section(self, temp_dir: Path, library_path: Path):
+        """Compile specific section to Score IR."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+        arr.add_layer("bass", LayerRole.BASS)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr.layers["bass"].arrangement["verse"] = "main"
+
+        result = await tools["music_compile_to_ir"](arrangement="test", section="verse")
+        data = json.loads(result)
+        assert data["status"] == "success"
+        assert data["score_ir"]["schema"] == "score_ir/v1"
+
+    @pytest.mark.asyncio
+    async def test_compile_to_ir_without_notes(self, temp_dir: Path, library_path: Path):
+        """Compile to IR without including notes."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+        arr.add_layer("bass", LayerRole.BASS)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr.layers["bass"].arrangement["verse"] = "main"
+
+        result = await tools["music_compile_to_ir"](arrangement="test", include_notes=False)
+        data = json.loads(result)
+        assert data["status"] == "success"
+        assert data["score_ir"]["notes"] == []
+        assert "note_count" in data["score_ir"]
+
+    @pytest.mark.asyncio
+    async def test_compile_to_ir_not_found(self, temp_dir: Path, library_path: Path):
+        """Compile to IR for nonexistent arrangement."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        result = await tools["music_compile_to_ir"](arrangement="nonexistent")
+        data = json.loads(result)
+        assert data["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_compile_to_ir_section_not_found(self, temp_dir: Path, library_path: Path):
+        """Compile to IR for nonexistent section."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+
+        result = await tools["music_compile_to_ir"](arrangement="test", section="nonexistent")
+        data = json.loads(result)
+        assert data["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_diff_ir(self, temp_dir: Path, library_path: Path):
+        """Diff two arrangements' Score IRs."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        # Create two arrangements
+        arr1 = await manager.create(name="track-v1", key="D_minor", tempo=124)
+        arr1.add_section("verse", 4)
+        arr1.add_layer("bass", LayerRole.BASS)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr1.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr1.layers["bass"].arrangement["verse"] = "main"
+
+        arr2 = await manager.create(name="track-v2", key="D_minor", tempo=124)
+        arr2.add_section("verse", 8)  # Different bar count
+        arr2.add_layer("bass", LayerRole.BASS)
+        arr2.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr2.layers["bass"].arrangement["verse"] = "main"
+
+        result = await tools["music_diff_ir"](arrangement="track-v1", other_arrangement="track-v2")
+        data = json.loads(result)
+        assert data["status"] == "success"
+        assert "diff" in data
+        assert data["arrangement_a"] == "track-v1"
+        assert data["arrangement_b"] == "track-v2"
+
+    @pytest.mark.asyncio
+    async def test_diff_ir_first_not_found(self, temp_dir: Path, library_path: Path):
+        """Diff with first arrangement not found."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        await manager.create(name="track-v2", key="D_minor", tempo=124)
+
+        result = await tools["music_diff_ir"](
+            arrangement="nonexistent", other_arrangement="track-v2"
+        )
+        data = json.loads(result)
+        assert data["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_diff_ir_second_not_found(self, temp_dir: Path, library_path: Path):
+        """Diff with second arrangement not found."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        await manager.create(name="track-v1", key="D_minor", tempo=124)
+
+        result = await tools["music_diff_ir"](
+            arrangement="track-v1", other_arrangement="nonexistent"
+        )
+        data = json.loads(result)
+        assert data["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_emit_midi_from_ir(self, temp_dir: Path, library_path: Path):
+        """Emit MIDI from Score IR JSON."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        # Create arrangement and compile to IR
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+        arr.add_layer("bass", LayerRole.BASS)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr.layers["bass"].arrangement["verse"] = "main"
+
+        ir_result = await tools["music_compile_to_ir"](arrangement="test")
+        ir_data = json.loads(ir_result)
+
+        # Emit MIDI from IR
+        result = await tools["music_emit_midi_from_ir"](
+            ir_json=json.dumps(ir_data["score_ir"]), output_name="from-ir"
+        )
+        data = json.loads(result)
+        assert data["status"] == "success"
+        assert Path(data["path"]).exists()
+        assert "from-ir.mid" in data["path"]
+
+    @pytest.mark.asyncio
+    async def test_emit_midi_from_ir_invalid_json(self, temp_dir: Path, library_path: Path):
+        """Emit MIDI from invalid IR JSON."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        result = await tools["music_emit_midi_from_ir"](
+            ir_json="not valid json", output_name="invalid"
+        )
+        data = json.loads(result)
+        assert data["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_modify_ir_filter_layers(self, temp_dir: Path, library_path: Path):
+        """Modify IR by filtering layers."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        # Create arrangement with multiple layers
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+        arr.add_layer("bass", LayerRole.BASS)
+        arr.add_layer("drums", LayerRole.DRUMS, channel=9)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr.layers["bass"].arrangement["verse"] = "main"
+        arr.layers["drums"].patterns["main"] = PatternRef(ref="drums/four-on-floor")
+        arr.layers["drums"].arrangement["verse"] = "main"
+
+        # Compile to IR
+        ir_result = await tools["music_compile_to_ir"](arrangement="test")
+        ir_data = json.loads(ir_result)
+
+        # Filter to just bass
+        result = await tools["music_modify_ir"](
+            ir_json=json.dumps(ir_data["score_ir"]), filter_layers=["bass"]
+        )
+        data = json.loads(result)
+        assert data["status"] == "success"
+        assert data["modifications"]["filter_layers"] == ["bass"]
+        # All notes should be from bass
+        for note in data["score_ir"]["notes"]:
+            assert note["source_layer"] == "bass"
+
+    @pytest.mark.asyncio
+    async def test_modify_ir_exclude_layers(self, temp_dir: Path, library_path: Path):
+        """Modify IR by excluding layers."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+        arr.add_layer("bass", LayerRole.BASS)
+        arr.add_layer("drums", LayerRole.DRUMS, channel=9)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr.layers["bass"].arrangement["verse"] = "main"
+        arr.layers["drums"].patterns["main"] = PatternRef(ref="drums/four-on-floor")
+        arr.layers["drums"].arrangement["verse"] = "main"
+
+        ir_result = await tools["music_compile_to_ir"](arrangement="test")
+        ir_data = json.loads(ir_result)
+
+        # Exclude drums
+        result = await tools["music_modify_ir"](
+            ir_json=json.dumps(ir_data["score_ir"]), exclude_layers=["drums"]
+        )
+        data = json.loads(result)
+        assert data["status"] == "success"
+        # No notes should be from drums
+        for note in data["score_ir"]["notes"]:
+            assert note["source_layer"] != "drums"
+
+    @pytest.mark.asyncio
+    async def test_modify_ir_velocity_scale(self, temp_dir: Path, library_path: Path):
+        """Modify IR with velocity scaling."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+        arr.add_layer("bass", LayerRole.BASS)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr.layers["bass"].arrangement["verse"] = "main"
+
+        ir_result = await tools["music_compile_to_ir"](arrangement="test")
+        ir_data = json.loads(ir_result)
+
+        # Scale velocity to 50%
+        result = await tools["music_modify_ir"](
+            ir_json=json.dumps(ir_data["score_ir"]), velocity_scale=0.5
+        )
+        data = json.loads(result)
+        assert data["status"] == "success"
+        assert data["modifications"]["velocity_scale"] == 0.5
+
+    @pytest.mark.asyncio
+    async def test_modify_ir_transpose(self, temp_dir: Path, library_path: Path):
+        """Modify IR with transposition."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+        arr.add_layer("bass", LayerRole.BASS)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr.layers["bass"].arrangement["verse"] = "main"
+
+        ir_result = await tools["music_compile_to_ir"](arrangement="test")
+        ir_data = json.loads(ir_result)
+
+        # Transpose up an octave
+        result = await tools["music_modify_ir"](
+            ir_json=json.dumps(ir_data["score_ir"]), transpose=12
+        )
+        data = json.loads(result)
+        assert data["status"] == "success"
+        assert data["modifications"]["transpose"] == 12
+
+    @pytest.mark.asyncio
+    async def test_modify_ir_filter_sections(self, temp_dir: Path, library_path: Path):
+        """Modify IR by filtering sections."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+        arr.add_section("chorus", 4)
+        arr.add_layer("bass", LayerRole.BASS)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr.layers["bass"].arrangement["verse"] = "main"
+        arr.layers["bass"].arrangement["chorus"] = "main"
+
+        ir_result = await tools["music_compile_to_ir"](arrangement="test")
+        ir_data = json.loads(ir_result)
+
+        # Filter to just verse
+        result = await tools["music_modify_ir"](
+            ir_json=json.dumps(ir_data["score_ir"]), filter_sections=["verse"]
+        )
+        data = json.loads(result)
+        assert data["status"] == "success"
+        # All notes should be from verse section
+        for note in data["score_ir"]["notes"]:
+            assert note["source_section"] == "verse"
+
+    @pytest.mark.asyncio
+    async def test_modify_ir_exclude_sections(self, temp_dir: Path, library_path: Path):
+        """Modify IR by excluding sections."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+        arr.add_section("chorus", 4)
+        arr.add_layer("bass", LayerRole.BASS)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr.layers["bass"].arrangement["verse"] = "main"
+        arr.layers["bass"].arrangement["chorus"] = "main"
+
+        ir_result = await tools["music_compile_to_ir"](arrangement="test")
+        ir_data = json.loads(ir_result)
+
+        # Exclude chorus
+        result = await tools["music_modify_ir"](
+            ir_json=json.dumps(ir_data["score_ir"]), exclude_sections=["chorus"]
+        )
+        data = json.loads(result)
+        assert data["status"] == "success"
+        # No notes should be from chorus
+        for note in data["score_ir"]["notes"]:
+            assert note["source_section"] != "chorus"
+
+    @pytest.mark.asyncio
+    async def test_modify_ir_invalid_json(self, temp_dir: Path, library_path: Path):
+        """Modify IR with invalid JSON."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        result = await tools["music_modify_ir"](ir_json="not valid json", filter_layers=["bass"])
+        data = json.loads(result)
+        assert data["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_modify_ir_combined_transforms(self, temp_dir: Path, library_path: Path):
+        """Modify IR with multiple transforms combined."""
+        from chuk_mcp_music.tools.compilation import register_compilation_tools
+
+        mcp = MockMCPServer("test")
+        manager = ArrangementManager(temp_dir)
+        registry = PatternRegistry(library_path=library_path)
+        output_dir = temp_dir / "output"
+        tools = register_compilation_tools(mcp, manager, registry, output_dir)
+
+        arr = await manager.create(name="test", key="D_minor", tempo=124)
+        arr.add_section("verse", 4)
+        arr.add_layer("bass", LayerRole.BASS)
+        from chuk_mcp_music.models.arrangement import PatternRef
+
+        arr.layers["bass"].patterns["main"] = PatternRef(ref="bass/root-pulse")
+        arr.layers["bass"].arrangement["verse"] = "main"
+
+        ir_result = await tools["music_compile_to_ir"](arrangement="test")
+        ir_data = json.loads(ir_result)
+
+        # Apply multiple transforms
+        result = await tools["music_modify_ir"](
+            ir_json=json.dumps(ir_data["score_ir"]),
+            filter_layers=["bass"],
+            velocity_scale=0.8,
+            transpose=12,
+        )
+        data = json.loads(result)
+        assert data["status"] == "success"
+        assert data["modifications"]["filter_layers"] == ["bass"]
+        assert data["modifications"]["velocity_scale"] == 0.8
+        assert data["modifications"]["transpose"] == 12

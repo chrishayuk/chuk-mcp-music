@@ -1,0 +1,96 @@
+schema: pattern/v1
+name: four-on-floor
+role: drums
+description: Classic four-on-the-floor kick pattern with hi-hats
+version: 1.0.0
+pitched: false
+
+parameters:
+  hat_density:
+    type: enum
+    description: Hi-hat note density
+    values: [quarter, eighth, sixteenth]
+    default: eighth
+  hat_velocity:
+    type: float
+    description: Hi-hat velocity (0-1)
+    range: [0.3, 1.0]
+    default: 0.6
+  kick_velocity:
+    type: float
+    description: Kick velocity (0-1)
+    range: [0.5, 1.0]
+    default: 0.9
+
+variants:
+  minimal:
+    description: Just the kick
+    hat_density: quarter
+    hat_velocity: 0.4
+  driving:
+    description: Intense sixteenth hi-hats
+    hat_density: sixteenth
+    hat_velocity: 0.7
+  soft:
+    description: Softer, laid back feel
+    kick_velocity: 0.7
+    hat_velocity: 0.5
+
+constraints:
+  requires_harmony: false
+  compatible_styles: [house, techno, disco, pop]
+
+template:
+  bars: 1
+  loop: true
+  events:
+    # Kick on every beat
+    - beat: 0
+      note: 36
+      duration: 0.25
+      velocity: 0.9
+    - beat: 1
+      note: 36
+      duration: 0.25
+      velocity: 0.9
+    - beat: 2
+      note: 36
+      duration: 0.25
+      velocity: 0.9
+    - beat: 3
+      note: 36
+      duration: 0.25
+      velocity: 0.9
+    # Hi-hats on eighth notes
+    - beat: 0
+      note: 42
+      duration: 0.25
+      velocity: 0.6
+    - beat: 0.5
+      note: 42
+      duration: 0.25
+      velocity: 0.5
+    - beat: 1
+      note: 42
+      duration: 0.25
+      velocity: 0.6
+    - beat: 1.5
+      note: 42
+      duration: 0.25
+      velocity: 0.5
+    - beat: 2
+      note: 42
+      duration: 0.25
+      velocity: 0.6
+    - beat: 2.5
+      note: 42
+      duration: 0.25
+      velocity: 0.5
+    - beat: 3
+      note: 42
+      duration: 0.25
+      velocity: 0.6
+    - beat: 3.5
+      note: 42
+      duration: 0.25
+      velocity: 0.5

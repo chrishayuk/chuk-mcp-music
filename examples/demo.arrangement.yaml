@@ -1,0 +1,114 @@
+schema: arrangement/v1
+name: demo
+context:
+  key: D_minor
+  tempo: 124
+  time_signature: 4/4
+  style: null
+
+harmony:
+  default_progression:
+    - i
+    - VI
+    - III
+    - VII
+  harmonic_rhythm: 1bar
+  sections:
+    breakdown:
+      progression:
+        - i
+        - i
+        - VI
+        - VI
+      harmonic_rhythm: 1bar
+    chorus:
+      progression:
+        - i
+        - VII
+        - VI
+        - VII
+      harmonic_rhythm: 1bar
+
+sections:
+  - name: intro
+    bars: 8
+    energy: low
+  - name: verse
+    bars: 16
+    energy: medium
+  - name: breakdown
+    bars: 8
+    energy: low
+  - name: chorus
+    bars: 16
+    energy: high
+  - name: outro
+    bars: 8
+    energy: medium
+
+layers:
+  drums:
+    role: drums
+    channel: 9
+    patterns:
+      main:
+        ref: drums/four-on-floor
+        variant: null
+        params: {}
+      sparse:
+        ref: drums/minimal-techno
+        variant: null
+        params: {}
+    arrangement:
+      intro: null
+      verse: main
+      breakdown: null
+      chorus: main
+      outro: sparse
+    muted: false
+    solo: false
+    level: 1.0
+
+  bass:
+    role: bass
+    channel: 1
+    patterns:
+      pulse:
+        ref: bass/root-pulse
+        variant: null
+        params: {}
+      rolling:
+        ref: bass/octave-bounce
+        variant: null
+        params: {}
+    arrangement:
+      intro: null
+      verse: pulse
+      breakdown: null
+      chorus: rolling
+      outro: pulse
+    muted: false
+    solo: false
+    level: 1.0
+
+  harmony:
+    role: harmony
+    channel: 2
+    patterns:
+      pad:
+        ref: harmony/pad-swell
+        variant: null
+        params: {}
+      arp:
+        ref: harmony/arp-pattern
+        variant: null
+        params: {}
+    arrangement:
+      intro: pad
+      verse: pad
+      breakdown: pad
+      chorus: arp
+      outro: pad
+    muted: false
+    solo: false
+    level: 0.8

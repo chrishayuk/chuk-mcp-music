@@ -1,0 +1,85 @@
+schema: style/v1
+name: melodic-techno
+description: Driving, melodic electronic music with emotional depth. Characterized by four-on-floor beats, rolling basslines, and atmospheric pads.
+
+tokens:
+  tempo:
+    range: [120, 128]
+    default: 124
+  key_preference: minor
+  time_signature: 4/4
+
+energy_mapping:
+  lowest:
+    layers: [1, 2]
+    percussion: none
+    harmony_density: sparse
+    velocity_range: [0.3, 0.5]
+  low:
+    layers: [1, 3]
+    percussion: minimal
+    harmony_density: sparse
+    velocity_range: [0.4, 0.6]
+  medium:
+    layers: [2, 4]
+    percussion: standard
+    harmony_density: moderate
+    velocity_range: [0.5, 0.8]
+  high:
+    layers: [3, 5]
+    percussion: full
+    harmony_density: rich
+    velocity_range: [0.7, 1.0]
+  highest:
+    layers: [4, 6]
+    percussion: dense
+    harmony_density: dense
+    velocity_range: [0.8, 1.0]
+
+layer_hints:
+  drums:
+    suggested:
+      - drums/four-on-floor
+      - drums/minimal-techno
+    avoid:
+      - drums/breakbeat-*
+      - drums/trap-*
+    density: moderate
+  bass:
+    suggested:
+      - bass/rolling-sixteenths
+      - bass/root-pulse
+      - bass/octave-bounce
+    register: low
+    density: moderate
+  harmony:
+    suggested:
+      - harmony/pad-*
+      - harmony/arp-*
+    avoid:
+      - harmony/chord-stabs
+    register: mid
+    density: sparse
+  melody:
+    suggested:
+      - melody/sequence-*
+    register: high
+    density: sparse
+  fx:
+    suggested:
+      - fx/riser-*
+      - fx/sweep-*
+
+structure_hints:
+  breakdown_required: true
+  typical_length_bars: [64, 128]
+  intro_bars: [8, 16]
+  outro_bars: [8, 16]
+  section_multiples: 8
+
+forbidden:
+  patterns:
+    - drums/trap-hihat
+    - bass/wobble-*
+  progressions:
+    - ii-V-I

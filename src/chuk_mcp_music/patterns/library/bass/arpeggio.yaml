@@ -1,0 +1,80 @@
+schema: pattern/v1
+name: arpeggio
+role: bass
+description: Arpeggiated bass pattern through chord tones
+version: 1.0.0
+pitched: true
+
+parameters:
+  direction:
+    type: enum
+    description: Arpeggio direction
+    values: [up, down, updown]
+    default: up
+  velocity:
+    type: float
+    description: Base velocity (0-1)
+    range: [0.5, 1.0]
+    default: 0.75
+
+variants:
+  ascending:
+    description: Upward arpeggio
+    direction: up
+  descending:
+    description: Downward arpeggio
+    direction: down
+  wave:
+    description: Up then down
+    direction: updown
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [progressive, trance, ambient, classical]
+
+template:
+  bars: 1
+  loop: true
+  events:
+    # Root
+    - beat: 0
+      degree: chord.root
+      duration: eighth
+      velocity: 0.8
+    # Third
+    - beat: 0.5
+      degree: chord.third
+      duration: eighth
+      velocity: 0.7
+    # Fifth
+    - beat: 1
+      degree: chord.fifth
+      duration: eighth
+      velocity: 0.75
+    # Octave
+    - beat: 1.5
+      degree: chord.root
+      duration: eighth
+      velocity: 0.7
+      octave_shift: 1
+    # Back down - Fifth
+    - beat: 2
+      degree: chord.fifth
+      duration: eighth
+      velocity: 0.75
+    # Third
+    - beat: 2.5
+      degree: chord.third
+      duration: eighth
+      velocity: 0.7
+    # Root
+    - beat: 3
+      degree: chord.root
+      duration: eighth
+      velocity: 0.8
+    # Fifth below
+    - beat: 3.5
+      degree: chord.fifth
+      duration: eighth
+      velocity: 0.65
+      octave_shift: -1

@@ -1,0 +1,81 @@
+schema: pattern/v1
+name: minimal-techno
+role: drums
+description: Sparse minimal techno pattern with rimshot accents
+version: 1.0.0
+pitched: false
+
+parameters:
+  rim_density:
+    type: enum
+    description: Rimshot density
+    values: [sparse, medium, dense]
+    default: sparse
+
+variants:
+  hypnotic:
+    description: Very sparse, hypnotic feel
+    rim_density: sparse
+  groovy:
+    description: More movement with rim accents
+    rim_density: medium
+
+constraints:
+  requires_harmony: false
+  compatible_styles: [minimal-techno, techno, ambient-techno]
+
+template:
+  bars: 2
+  loop: true
+  events:
+    # Kick pattern
+    - beat: 0
+      note: 36
+      duration: 0.25
+      velocity: 0.95
+    - beat: 1
+      note: 36
+      duration: 0.25
+      velocity: 0.85
+    - beat: 2
+      note: 36
+      duration: 0.25
+      velocity: 0.9
+    - beat: 3
+      note: 36
+      duration: 0.25
+      velocity: 0.85
+    - beat: 4
+      note: 36
+      duration: 0.25
+      velocity: 0.95
+    - beat: 5
+      note: 36
+      duration: 0.25
+      velocity: 0.85
+    - beat: 6
+      note: 36
+      duration: 0.25
+      velocity: 0.9
+    - beat: 7
+      note: 36
+      duration: 0.25
+      velocity: 0.85
+    # Rimshot accents
+    - beat: 1.5
+      note: 37
+      duration: 0.125
+      velocity: 0.5
+    - beat: 5.75
+      note: 37
+      duration: 0.125
+      velocity: 0.45
+    # Open hat accents
+    - beat: 3.5
+      note: 46
+      duration: 0.25
+      velocity: 0.4
+    - beat: 7.5
+      note: 46
+      duration: 0.25
+      velocity: 0.35

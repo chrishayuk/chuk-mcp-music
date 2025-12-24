@@ -1,0 +1,73 @@
+schema: pattern/v1
+name: riser
+role: fx
+description: Rising tension builder effect
+version: 1.0.0
+pitched: true
+
+parameters:
+  length:
+    type: enum
+    description: Riser length
+    values: [short, medium, long]
+    default: medium
+  velocity:
+    type: float
+    description: Peak velocity (0-1)
+    range: [0.5, 1.0]
+    default: 0.8
+
+variants:
+  quick:
+    description: 2-bar riser
+    length: short
+  standard:
+    description: 4-bar riser
+    length: medium
+  epic:
+    description: 8-bar slow build
+    length: long
+    velocity: 0.9
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [edm, trance, electronic, cinematic]
+
+template:
+  bars: 4
+  loop: false
+  events:
+    # Rising scale notes with increasing velocity
+    - beat: 0
+      degree: scale.1
+      duration: 2
+      velocity: 0.3
+    - beat: 2
+      degree: scale.2
+      duration: 2
+      velocity: 0.35
+    - beat: 4
+      degree: scale.3
+      duration: 2
+      velocity: 0.4
+    - beat: 6
+      degree: scale.4
+      duration: 2
+      velocity: 0.5
+    - beat: 8
+      degree: scale.5
+      duration: 2
+      velocity: 0.6
+    - beat: 10
+      degree: scale.6
+      duration: 2
+      velocity: 0.7
+    - beat: 12
+      degree: scale.7
+      duration: 2
+      velocity: 0.8
+    - beat: 14
+      degree: scale.1
+      duration: 2
+      velocity: 0.9
+      octave_shift: 1

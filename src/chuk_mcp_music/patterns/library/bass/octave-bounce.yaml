@@ -1,0 +1,74 @@
+schema: pattern/v1
+name: octave-bounce
+role: bass
+description: Root and octave alternation pattern
+version: 1.0.0
+pitched: true
+
+parameters:
+  velocity:
+    type: float
+    description: Base velocity (0-1)
+    range: [0.5, 1.0]
+    default: 0.8
+
+variants:
+  tight:
+    description: Tight staccato bounces
+    velocity: 0.9
+  mellow:
+    description: Softer feel
+    velocity: 0.65
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [disco, funk, house, pop]
+
+template:
+  bars: 1
+  loop: true
+  events:
+    # Low root
+    - beat: 0
+      degree: chord.root
+      duration: eighth
+      velocity: 0.85
+      octave_shift: -1
+    # High root (octave up)
+    - beat: 0.5
+      degree: chord.root
+      duration: eighth
+      velocity: 0.7
+    # Low root
+    - beat: 1
+      degree: chord.root
+      duration: eighth
+      velocity: 0.8
+      octave_shift: -1
+    # High root
+    - beat: 1.5
+      degree: chord.root
+      duration: eighth
+      velocity: 0.7
+    # Low root
+    - beat: 2
+      degree: chord.root
+      duration: eighth
+      velocity: 0.85
+      octave_shift: -1
+    # High root
+    - beat: 2.5
+      degree: chord.root
+      duration: eighth
+      velocity: 0.7
+    # Low root
+    - beat: 3
+      degree: chord.root
+      duration: eighth
+      velocity: 0.8
+      octave_shift: -1
+    # High root
+    - beat: 3.5
+      degree: chord.root
+      duration: eighth
+      velocity: 0.7

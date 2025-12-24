@@ -1,0 +1,103 @@
+schema: pattern/v1
+name: arp-pattern
+role: harmony
+description: Arpeggiated harmony pattern
+version: 1.0.0
+pitched: true
+
+parameters:
+  rate:
+    type: enum
+    description: Arpeggio rate
+    values: [eighth, sixteenth]
+    default: sixteenth
+  velocity:
+    type: float
+    description: Note velocity (0-1)
+    range: [0.4, 0.9]
+    default: 0.6
+
+variants:
+  slow:
+    description: Eighth note arpeggios
+    rate: eighth
+  fast:
+    description: Sixteenth note arpeggios
+    rate: sixteenth
+    velocity: 0.55
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [trance, progressive, edm, synthwave]
+
+template:
+  bars: 1
+  loop: true
+  events:
+    # Sixteenth note arpeggio pattern
+    - beat: 0
+      degree: chord.root
+      duration: sixteenth
+      velocity: 0.65
+    - beat: 0.25
+      degree: chord.third
+      duration: sixteenth
+      velocity: 0.55
+    - beat: 0.5
+      degree: chord.fifth
+      duration: sixteenth
+      velocity: 0.55
+    - beat: 0.75
+      degree: chord.third
+      duration: sixteenth
+      velocity: 0.5
+    - beat: 1
+      degree: chord.root
+      duration: sixteenth
+      velocity: 0.6
+      octave_shift: 1
+    - beat: 1.25
+      degree: chord.fifth
+      duration: sixteenth
+      velocity: 0.55
+    - beat: 1.5
+      degree: chord.third
+      duration: sixteenth
+      velocity: 0.55
+    - beat: 1.75
+      degree: chord.root
+      duration: sixteenth
+      velocity: 0.5
+    - beat: 2
+      degree: chord.root
+      duration: sixteenth
+      velocity: 0.65
+    - beat: 2.25
+      degree: chord.third
+      duration: sixteenth
+      velocity: 0.55
+    - beat: 2.5
+      degree: chord.fifth
+      duration: sixteenth
+      velocity: 0.55
+    - beat: 2.75
+      degree: chord.third
+      duration: sixteenth
+      velocity: 0.5
+    - beat: 3
+      degree: chord.root
+      duration: sixteenth
+      velocity: 0.6
+      octave_shift: 1
+    - beat: 3.25
+      degree: chord.fifth
+      duration: sixteenth
+      velocity: 0.55
+    - beat: 3.5
+      degree: chord.third
+      duration: sixteenth
+      velocity: 0.55
+    - beat: 3.75
+      degree: chord.root
+      duration: sixteenth
+      velocity: 0.5

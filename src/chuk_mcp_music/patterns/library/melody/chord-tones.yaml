@@ -1,0 +1,65 @@
+schema: pattern/v1
+name: chord-tones
+role: melody
+description: Melodic pattern based on chord tones
+version: 1.0.0
+pitched: true
+
+parameters:
+  rhythm:
+    type: enum
+    description: Rhythmic pattern
+    values: [quarter, syncopated, dotted]
+    default: quarter
+  velocity:
+    type: float
+    description: Note velocity (0-1)
+    range: [0.5, 1.0]
+    default: 0.8
+
+variants:
+  simple:
+    description: Straight quarter notes
+    rhythm: quarter
+  groovy:
+    description: Syncopated feel
+    rhythm: syncopated
+  expressive:
+    description: Dotted rhythm
+    rhythm: dotted
+    velocity: 0.85
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [pop, jazz, soul, r-and-b]
+
+template:
+  bars: 2
+  loop: true
+  events:
+    # Bar 1
+    - beat: 0
+      degree: chord.root
+      duration: quarter
+      velocity: 0.85
+    - beat: 1
+      degree: chord.third
+      duration: quarter
+      velocity: 0.75
+    - beat: 2
+      degree: chord.fifth
+      duration: half
+      velocity: 0.8
+    # Bar 2
+    - beat: 4
+      degree: chord.fifth
+      duration: quarter
+      velocity: 0.8
+    - beat: 5
+      degree: chord.third
+      duration: quarter
+      velocity: 0.75
+    - beat: 6
+      degree: chord.root
+      duration: half
+      velocity: 0.85

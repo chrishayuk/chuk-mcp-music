@@ -1,0 +1,57 @@
+schema: pattern/v1
+name: pad-swell
+role: harmony
+description: Sustained pad voicing with gentle swell
+version: 1.0.0
+pitched: true
+
+parameters:
+  voicing:
+    type: enum
+    description: Chord voicing type
+    values: [close, open, spread]
+    default: open
+  velocity:
+    type: float
+    description: Peak velocity (0-1)
+    range: [0.3, 0.8]
+    default: 0.55
+
+variants:
+  ambient:
+    description: Very soft and atmospheric
+    velocity: 0.4
+    voicing: spread
+  cinematic:
+    description: Fuller sound
+    velocity: 0.7
+    voicing: open
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [ambient, cinematic, electronic, new-age]
+
+template:
+  bars: 2
+  loop: true
+  events:
+    # Bar 1 - build
+    - beat: 0
+      degree: chord.root
+      duration: 8
+      velocity: 0.5
+    - beat: 0
+      degree: chord.fifth
+      duration: 8
+      velocity: 0.45
+    - beat: 0
+      degree: chord.third
+      duration: 8
+      velocity: 0.45
+      octave_shift: 1
+    # Add seventh on beat 2 of bar 1
+    - beat: 2
+      degree: chord.seventh
+      duration: 6
+      velocity: 0.4
+      octave_shift: 1

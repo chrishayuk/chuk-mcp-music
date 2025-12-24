@@ -1,0 +1,49 @@
+schema: pattern/v1
+name: sweep
+role: fx
+description: Filter sweep effect with sustained tone
+version: 1.0.0
+pitched: true
+
+parameters:
+  duration:
+    type: enum
+    description: Sweep length
+    values: [bar, half, two-bar]
+    default: bar
+  velocity:
+    type: float
+    description: Sustained velocity (0-1)
+    range: [0.3, 0.8]
+    default: 0.5
+
+variants:
+  quick:
+    description: Half bar sweep
+    duration: half
+  standard:
+    description: Full bar sweep
+    duration: bar
+  long:
+    description: Two bar sweep
+    duration: two-bar
+    velocity: 0.4
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [house, techno, trance, electronic]
+
+template:
+  bars: 1
+  loop: true
+  events:
+    # Sustained root with fifth for sweep effect
+    - beat: 0
+      degree: chord.root
+      duration: whole
+      velocity: 0.5
+    - beat: 0
+      degree: chord.fifth
+      duration: whole
+      velocity: 0.45
+      octave_shift: 1

@@ -1,0 +1,83 @@
+schema: style/v1
+name: cinematic
+description: Epic, orchestral-influenced music for film and media. Dynamic range from intimate to massive, with clear emotional arcs.
+
+tokens:
+  tempo:
+    range: [70, 140]
+    default: 100
+  key_preference: minor
+  time_signature: 4/4
+
+energy_mapping:
+  lowest:
+    layers: [1, 2]
+    percussion: none
+    harmony_density: sparse
+    velocity_range: [0.2, 0.4]
+  low:
+    layers: [2, 3]
+    percussion: minimal
+    harmony_density: sparse
+    velocity_range: [0.3, 0.5]
+  medium:
+    layers: [3, 4]
+    percussion: sparse
+    harmony_density: moderate
+    velocity_range: [0.5, 0.7]
+  high:
+    layers: [4, 5]
+    percussion: standard
+    harmony_density: rich
+    velocity_range: [0.7, 0.9]
+  highest:
+    layers: [5, 6]
+    percussion: full
+    harmony_density: dense
+    velocity_range: [0.8, 1.0]
+
+layer_hints:
+  drums:
+    suggested:
+      - drums/minimal-techno
+    avoid:
+      - drums/trap-*
+      - drums/breakbeat-*
+    density: sparse
+  bass:
+    suggested:
+      - bass/root-pulse
+      - bass/octave-bounce
+    avoid:
+      - bass/rolling-sixteenths
+    register: low
+    density: sparse
+  harmony:
+    suggested:
+      - harmony/pad-*
+    avoid: []
+    register: mid
+    density: rich
+  melody:
+    suggested:
+      - melody/call-response
+      - melody/sequence-rising
+    register: high
+    density: sparse
+  fx:
+    suggested:
+      - fx/riser-*
+      - fx/impact-*
+      - fx/sweep-*
+
+structure_hints:
+  breakdown_required: false
+  typical_length_bars: [32, 64]
+  intro_bars: [4, 16]
+  outro_bars: [4, 16]
+  section_multiples: 4
+
+forbidden:
+  patterns:
+    - drums/trap-*
+  progressions: []

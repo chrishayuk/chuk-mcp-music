@@ -1,0 +1,79 @@
+schema: pattern/v1
+name: call-response
+role: melody
+description: Call and response melodic phrase
+version: 1.0.0
+pitched: true
+
+parameters:
+  intensity:
+    type: enum
+    description: Melodic intensity
+    values: [subtle, moderate, bold]
+    default: moderate
+  velocity:
+    type: float
+    description: Base velocity (0-1)
+    range: [0.5, 1.0]
+    default: 0.75
+
+variants:
+  gentle:
+    description: Soft call and response
+    intensity: subtle
+    velocity: 0.65
+  dramatic:
+    description: Bold phrasing
+    intensity: bold
+    velocity: 0.9
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [gospel, soul, blues, jazz]
+
+template:
+  bars: 2
+  loop: true
+  events:
+    # Call phrase (bar 1)
+    - beat: 0
+      degree: scale.5
+      duration: quarter
+      velocity: 0.85
+    - beat: 0.75
+      degree: scale.6
+      duration: eighth
+      velocity: 0.7
+    - beat: 1
+      degree: scale.5
+      duration: quarter
+      velocity: 0.75
+    - beat: 1.75
+      degree: scale.3
+      duration: eighth
+      velocity: 0.7
+    - beat: 2
+      degree: scale.1
+      duration: half
+      velocity: 0.8
+    # Response phrase (bar 2)
+    - beat: 4
+      degree: scale.3
+      duration: quarter
+      velocity: 0.75
+    - beat: 4.75
+      degree: scale.4
+      duration: eighth
+      velocity: 0.65
+    - beat: 5
+      degree: scale.5
+      duration: quarter
+      velocity: 0.8
+    - beat: 6
+      degree: scale.3
+      duration: quarter
+      velocity: 0.7
+    - beat: 7
+      degree: scale.1
+      duration: quarter
+      velocity: 0.85

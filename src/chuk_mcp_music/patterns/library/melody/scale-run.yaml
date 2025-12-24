@@ -1,0 +1,72 @@
+schema: pattern/v1
+name: scale-run
+role: melody
+description: Ascending and descending scale runs
+version: 1.0.0
+pitched: true
+
+parameters:
+  direction:
+    type: enum
+    description: Run direction
+    values: [up, down, updown]
+    default: up
+  velocity:
+    type: float
+    description: Note velocity (0-1)
+    range: [0.5, 1.0]
+    default: 0.75
+
+variants:
+  ascending:
+    description: Rising energy
+    direction: up
+  descending:
+    description: Falling resolution
+    direction: down
+  wave:
+    description: Full octave cycle
+    direction: updown
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [classical, jazz, pop, electronic]
+
+template:
+  bars: 1
+  loop: true
+  events:
+    # Ascending scale run
+    - beat: 0
+      degree: scale.1
+      duration: eighth
+      velocity: 0.8
+    - beat: 0.5
+      degree: scale.2
+      duration: eighth
+      velocity: 0.7
+    - beat: 1
+      degree: scale.3
+      duration: eighth
+      velocity: 0.75
+    - beat: 1.5
+      degree: scale.4
+      duration: eighth
+      velocity: 0.7
+    - beat: 2
+      degree: scale.5
+      duration: eighth
+      velocity: 0.8
+    - beat: 2.5
+      degree: scale.6
+      duration: eighth
+      velocity: 0.7
+    - beat: 3
+      degree: scale.7
+      duration: eighth
+      velocity: 0.75
+    - beat: 3.5
+      degree: scale.1
+      duration: eighth
+      velocity: 0.85
+      octave_shift: 1

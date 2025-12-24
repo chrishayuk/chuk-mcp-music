@@ -1,0 +1,85 @@
+schema: style/v1
+name: ambient
+description: Atmospheric, textural music focused on mood and space. Minimal rhythm, emphasis on evolving pads and subtle movement.
+
+tokens:
+  tempo:
+    range: [60, 100]
+    default: 80
+  key_preference: any
+  time_signature: 4/4
+
+energy_mapping:
+  lowest:
+    layers: [1, 2]
+    percussion: none
+    harmony_density: sparse
+    velocity_range: [0.2, 0.4]
+  low:
+    layers: [1, 2]
+    percussion: none
+    harmony_density: sparse
+    velocity_range: [0.3, 0.5]
+  medium:
+    layers: [2, 3]
+    percussion: minimal
+    harmony_density: moderate
+    velocity_range: [0.4, 0.6]
+  high:
+    layers: [2, 4]
+    percussion: sparse
+    harmony_density: moderate
+    velocity_range: [0.5, 0.7]
+  highest:
+    layers: [3, 4]
+    percussion: sparse
+    harmony_density: rich
+    velocity_range: [0.6, 0.8]
+
+layer_hints:
+  drums:
+    suggested: []
+    avoid:
+      - drums/four-on-floor
+      - drums/breakbeat-*
+      - drums/trap-*
+    density: sparse
+  bass:
+    suggested:
+      - bass/root-pulse
+    avoid:
+      - bass/rolling-sixteenths
+    register: sub
+    density: sparse
+  harmony:
+    suggested:
+      - harmony/pad-*
+    avoid:
+      - harmony/chord-stabs
+      - harmony/arp-*
+    register: mid
+    density: sparse
+  melody:
+    suggested: []
+    register: high
+    density: sparse
+  fx:
+    suggested:
+      - fx/sweep-*
+    avoid:
+      - fx/impact-*
+
+structure_hints:
+  breakdown_required: false
+  typical_length_bars: [32, 96]
+  intro_bars: [8, 32]
+  outro_bars: [8, 32]
+  section_multiples: 4
+
+forbidden:
+  patterns:
+    - drums/four-on-floor
+    - drums/breakbeat-*
+    - drums/trap-*
+    - bass/rolling-sixteenths
+  progressions: []

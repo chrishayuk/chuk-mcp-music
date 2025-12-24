@@ -1,0 +1,54 @@
+schema: pattern/v1
+name: block-chords
+role: harmony
+description: Block chord voicings on strong beats
+version: 1.0.0
+pitched: true
+
+parameters:
+  rhythm:
+    type: enum
+    description: Chord rhythm pattern
+    values: [whole, half, quarter]
+    default: whole
+  velocity:
+    type: float
+    description: Chord velocity (0-1)
+    range: [0.4, 0.9]
+    default: 0.65
+
+variants:
+  sustained:
+    description: One chord per bar
+    rhythm: whole
+  pumping:
+    description: Half note rhythm
+    rhythm: half
+  rhythmic:
+    description: Quarter note stabs
+    rhythm: quarter
+    velocity: 0.75
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [pop, rock, ballad, gospel]
+
+template:
+  bars: 1
+  loop: true
+  events:
+    # Root (bottom)
+    - beat: 0
+      degree: chord.root
+      duration: whole
+      velocity: 0.65
+    # Third (middle)
+    - beat: 0
+      degree: chord.third
+      duration: whole
+      velocity: 0.6
+    # Fifth (top)
+    - beat: 0
+      degree: chord.fifth
+      duration: whole
+      velocity: 0.6

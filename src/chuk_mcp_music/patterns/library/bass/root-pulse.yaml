@@ -1,0 +1,56 @@
+schema: pattern/v1
+name: root-pulse
+role: bass
+description: Steady root note pulse following the chord progression
+version: 1.0.0
+pitched: true
+
+parameters:
+  density:
+    type: enum
+    description: Note density
+    values: [whole, half, quarter, eighth]
+    default: quarter
+  velocity:
+    type: float
+    description: Base velocity (0-1)
+    range: [0.5, 1.0]
+    default: 0.8
+
+variants:
+  sustained:
+    description: Long sustained notes
+    density: whole
+  driving:
+    description: Faster eighth note pulse
+    density: eighth
+    velocity: 0.85
+  half-time:
+    description: Half note pulse
+    density: half
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [house, techno, pop, rock, electronic]
+
+template:
+  bars: 1
+  loop: true
+  events:
+    # Quarter note root pulse
+    - beat: 0
+      degree: chord.root
+      duration: quarter
+      velocity: 0.85
+    - beat: 1
+      degree: chord.root
+      duration: quarter
+      velocity: 0.75
+    - beat: 2
+      degree: chord.root
+      duration: quarter
+      velocity: 0.8
+    - beat: 3
+      degree: chord.root
+      duration: quarter
+      velocity: 0.75

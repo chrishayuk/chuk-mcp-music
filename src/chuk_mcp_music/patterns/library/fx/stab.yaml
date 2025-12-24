@@ -1,0 +1,88 @@
+schema: pattern/v1
+name: stab
+role: fx
+description: Rhythmic chord stab effect
+version: 1.0.0
+pitched: true
+
+parameters:
+  pattern:
+    type: enum
+    description: Stab rhythm pattern
+    values: [offbeat, downbeat, syncopated]
+    default: offbeat
+  velocity:
+    type: float
+    description: Stab velocity (0-1)
+    range: [0.6, 1.0]
+    default: 0.85
+
+variants:
+  offbeat:
+    description: Classic offbeat stabs
+    pattern: offbeat
+  punchy:
+    description: Downbeat emphasis
+    pattern: downbeat
+    velocity: 0.95
+  funky:
+    description: Syncopated pattern
+    pattern: syncopated
+
+constraints:
+  requires_harmony: true
+  compatible_styles: [house, disco, funk, electronic]
+
+template:
+  bars: 1
+  loop: true
+  events:
+    # Offbeat stabs
+    - beat: 0.5
+      degree: chord.root
+      duration: eighth
+      velocity: 0.85
+    - beat: 0.5
+      degree: chord.third
+      duration: eighth
+      velocity: 0.8
+    - beat: 0.5
+      degree: chord.fifth
+      duration: eighth
+      velocity: 0.8
+    - beat: 1.5
+      degree: chord.root
+      duration: eighth
+      velocity: 0.8
+    - beat: 1.5
+      degree: chord.third
+      duration: eighth
+      velocity: 0.75
+    - beat: 1.5
+      degree: chord.fifth
+      duration: eighth
+      velocity: 0.75
+    - beat: 2.5
+      degree: chord.root
+      duration: eighth
+      velocity: 0.85
+    - beat: 2.5
+      degree: chord.third
+      duration: eighth
+      velocity: 0.8
+    - beat: 2.5
+      degree: chord.fifth
+      duration: eighth
+      velocity: 0.8
+    - beat: 3.5
+      degree: chord.root
+      duration: eighth
+      velocity: 0.8
+    - beat: 3.5
+      degree: chord.third
+      duration: eighth
+      velocity: 0.75
+    - beat: 3.5
+      degree: chord.fifth
+      duration: eighth
+      velocity: 0.75
